@@ -17,4 +17,8 @@ pub fn create_api_router() -> Router<AppState> {
             "/api/books/{id}",
             put(api_handlers::update_book_api_handler),
         )
+        .route(
+            "/api/books/{id}/comments",
+            post(api_handlers::create_comment_api_handler),
+        )
 }

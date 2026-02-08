@@ -1,4 +1,4 @@
-use crate::models::models::{Book, CreateBook};
+use crate::models::models::{Book, Comment, CreateBook, CreateComment};
 use crate::state::AppState;
 use askama::Template;
 use axum::response::Redirect;
@@ -14,13 +14,6 @@ use std::fs;
 
 // Tamaño máximo permitido para la imagen de portada (2 MB)
 const MAX_IMAGE_SIZE: usize = 2 * 1024 * 1024;
-
-// Página de inicio que muestra el número total de libros en la base de datos
-#[derive(Template)]
-#[template(path = "index.html")]
-pub struct IndexTemplate {
-    pub count: i64,
-}
 
 // Función genérica para validar tamaño y tipo de imagen
 async fn save_image(
@@ -60,21 +53,71 @@ async fn save_image(
     Ok(String::from("uploads/portada_generica.jpg"))
 }
 
+// *** Aquí van los handlers para las rutas web ***
+
+// Página de inicio que muestra el número total de libros en la base de datos
+#[derive(Template)]
+#[template(path = "index.html")]
+pub struct IndexTemplate {
+    pub total_books: i64,
+    pub most_commented_book: Option<String>,
+    pub top_author: Option<String>,
+    pub storage_used: String,
+}
+
 // Función para manejar la ruta raíz y mostrar el número de libros
 pub async fn index_handler(
     State(state): State<AppState>,
 ) -> Result<Html<String>, (StatusCode, String)> {
-    // Contar el número de libros en la base de datos
-    let count: i64 = sqlx::query_scalar("SELECT COUNT(*)::BIGINT FROM books")
+    // 1. Contar el número de libros en la base de datos
+    let total_books: i64 = sqlx::query_scalar("SELECT COUNT(*)::BIGINT FROM books")
         .fetch_one(&state.db_pool)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+        .unwrap_or(0);
+
+    // 2. Obtener el libro más comentado
+    let most_commented_book: Option<String> = sqlx::query_scalar::<_, String>(
+        "SELECT b.title FROM books b LEFT JOIN comments c ON b.id = c.book_id GROUP BY b.id ORDER BY COUNT(c.id) DESC LIMIT 1",
+    )
+    .fetch_optional(&state.db_pool)
+    .await
+    .unwrap_or(None);
+
+    // 3. Obtener el autor con más libros
+    let top_author: Option<String> = sqlx::query_scalar::<_, String>(
+        "SELECT author FROM books GROUP BY author ORDER BY COUNT(*) DESC LIMIT 1",
+    )
+    .fetch_optional(&state.db_pool)
+    .await
+    .unwrap_or(None);
+
+    // 4. Calcular el espacio de almacenamiento utilizado por las imágenes
+    let storage_used = calculate_storage_size("uploads");
 
     // Renderizar la plantilla con el conteo de libros
-    let html = IndexTemplate { count }
-        .render()
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let html = IndexTemplate {
+        total_books,
+        most_commented_book,
+        top_author,
+        storage_used,
+    }
+    .render()
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Html(html))
+}
+
+fn calculate_storage_size(dir: &str) -> String {
+    let mut total_size = 0;
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            if let Ok(metadata) = entry.metadata() {
+                if metadata.is_file() {
+                    total_size += metadata.len();
+                }
+            }
+        }
+    }
+    format!("{:.2} MB", total_size as f64 / (1024.0 * 1024.0))
 }
 
 // Estructura para manejar los parámetros de búsqueda en la ruta de listado de libros
@@ -269,4 +312,61 @@ pub async fn update_book_web_handler(
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Redirect::to("/web/books"))
+}
+
+// [C] Página de detalles de un libro, con comentarios y portada
+#[derive(Template)]
+#[template(path = "book_detail.html")]
+pub struct BookDetailTemplate {
+    pub book: Book,
+    pub comments: Vec<Comment>,
+} // Aquí podrías tener una estructura más compleja para los comentarios
+
+pub async fn book_detail_web_handler(
+    State(state): State<AppState>,
+    Path(id): Path<uuid::Uuid>,
+) -> Result<Html<String>, (StatusCode, String)> {
+    let book = sqlx::query_as::<_, Book>("SELECT * FROM books WHERE id = $1")
+        .bind(id)
+        .fetch_one(&state.db_pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let comments = sqlx::query_as::<_, Comment>("SELECT * FROM comments WHERE book_id = $1")
+        .bind(id)
+        .fetch_all(&state.db_pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let html = BookDetailTemplate { book, comments }
+        .render()
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Html(html))
+}
+
+// Función para manejar la creación de un nuevo comentario
+pub async fn create_comment_web_handler(
+    State(state): State<AppState>,
+    Path(book_id): Path<uuid::Uuid>,
+    Form(payload): Form<CreateComment>,
+) -> Result<Redirect, (StatusCode, String)> {
+    let text = payload.text.trim();
+    if text.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "El comentario no puede estar vacío".to_string(),
+        ));
+    }
+
+    let new_id = uuid::Uuid::new_v4();
+    let _ = sqlx::query("INSERT INTO comments (id, book_id, text) VALUES ($1, $2, $3)")
+        .bind(new_id)
+        .bind(book_id)
+        .bind(text)
+        .execute(&state.db_pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Redirect::to(&format!("/web/books/{}", book_id)))
 }

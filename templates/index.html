@@ -1,17 +1,56 @@
-{% extends "base.html" %} {% block title %}Inicio - Biblioteca{% endblock %} {%
-block content %}
-<div class="p-5 mb-4 bg-white rounded-3 shadow-sm">
-  <h1 class="display-5 fw-bold">¡Bienvenido!</h1>
-  <p class="col-md-8 fs-4">
-    Actualmente tenemos <span class="badge bg-primary">{{ count }}</span> libros
-    registrados.
-  </p>
-  <hr class="my-4" />
-  <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-    <a href="/web/books" class="btn btn-primary btn-lg px-4">Ver Catálogo</a>
-    <a href="/web/books/new" class="btn btn-outline-secondary btn-lg px-4"
-      >Añadir Libro</a
-    >
+{% extends "base.html" %} {% block content %}
+<div class="row mb-4">
+  <div class="col-12">
+    <h1 class="display-4">Dashboard de Biblioteca 📊</h1>
+    <p class="lead">Resumen general del sistema.</p>
   </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-3">
+    <div class="card bg-primary text-white shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-title">Total Libros</h6>
+        <h2 class="display-6">{{ total_books }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-success text-white shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-title">Más Comentado 💬</h6>
+        <p class="card-text fw-bold">
+          {{ most_commented_book.as_deref().unwrap_or("N/A") }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-info text-white shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-title">Autor Principal ✍️</h6>
+        <p class="card-text fw-bold">
+          {{ top_author.as_deref().unwrap_or("N/A") }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-secondary text-white shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-title">Espacio en Disco 💾</h6>
+        <h2 class="display-6">{{ storage_used }}</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-5">
+  <a href="/web/books" class="btn btn-lg btn-outline-primary"
+    >Ir al Catálogo Completo</a
+  >
 </div>
 {% endblock %}

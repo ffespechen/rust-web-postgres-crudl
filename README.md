@@ -4,6 +4,8 @@ Una aplicación web profesional y robusta desarrollada con **Rust**, utilizando 
 
 Este proyecto implementa un sistema CRUDL (Create, Read, Update, Delete, List) completo, accesible tanto a través de una **Interfaz Web** responsiva como de una **API REST**.
 
+---
+
 ## 🚀 Características
 
 - **Seguridad de Tipos**: SQLx garantiza que tus consultas SQL sean correctas en tiempo de compilación.
@@ -12,6 +14,48 @@ Este proyecto implementa un sistema CRUDL (Create, Read, Update, Delete, List) c
 - **API REST**: Endpoints JSON dedicados para integración con terceros.
 - **Dockerizado**: Entorno de desarrollo y producción reproducible con Docker Compose.
 - **Migraciones Automáticas**: La base de datos se actualiza automáticamente al iniciar la app.
+
+## 🧠 Arquitectura y Diseño de Datos
+
+### 1. Relaciones de Base de Datos (Entity-Relationship) 🏗️
+
+El sistema utiliza una relación **Uno a Muchos (1:N)** entre Libros y Comentarios, garantizando la integridad referencial mediante restricciones de base de datos.
+
+| Entidad        | Relación | Descripción                                                |
+| :------------- | :------- | :--------------------------------------------------------- |
+| **Book** 📚    | `1`      | Entidad principal que contiene metadatos y ruta de imagen. |
+| **Comment** 💬 | `N`      | Entidad dependiente vinculada mediante `book_id`.          |
+
+**Integridad Referencial:**
+
+- Se implementó `ON DELETE CASCADE`: Al eliminar un libro, el motor de base de datos elimina automáticamente todos sus comentarios asociados, evitando datos huérfanos.
+- El campo `created_at` en los comentarios utiliza `TIMESTAMPTZ` para asegurar la precisión cronológica global.
+
+---
+
+### 2. Arquitectura del Dashboard 📊
+
+El Dashboard de bienvenida no es estático; realiza un análisis en tiempo real combinando potencia de cálculo en SQL y procesamiento en Rust.
+
+#### A. Análisis SQL Avanzado 🐘
+
+Para obtener métricas competitivas, el sistema ejecuta consultas complejas directamente en PostgreSQL:
+
+- **Libro Estrella:** Determinado mediante un `LEFT JOIN` y `GROUP BY`, identificando el registro con mayor volumen de interacción (comentarios).
+- **Autor Prolífico:** Cálculo de frecuencia mediante agregación para identificar al autor con mayor presencia en el catálogo.
+
+#### B. Procesamiento de Archivos en Rust 🦀
+
+A diferencia de las métricas de base de datos, el uso de almacenamiento se calcula dinámicamente en la capa de aplicación:
+
+- **Función `calculate_storage_size`:** Implementada con la librería estándar `std::fs`. Recorre el sistema de archivos de forma recursiva (dentro del volumen de Docker) para sumar el peso real en bytes de todas las portadas subidas.
+- **Optimización:** Transforma valores crudos de disco en unidades legibles (MB) antes de renderizar la plantilla.
+
+#### C. Visualización Dinámica 🎨
+
+Los datos procesados se inyectan en plantillas **Askama**, donde se utilizan condicionales para manejar estados vacíos (por ejemplo, mostrando "N/A" si aún no hay comentarios) y componentes de Bootstrap para una respuesta visual inmediata.
+
+---
 
 ## 🛠️ Stack Tecnológico
 

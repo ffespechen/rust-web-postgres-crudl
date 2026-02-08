@@ -1,4 +1,4 @@
-use crate::models::models::{Book, CreateBook};
+use crate::models::models::{Book, Comment, CreateBook, CreateComment};
 use crate::state::AppState;
 use axum::{
     Json,
@@ -11,7 +11,7 @@ use uuid::Uuid;
 pub async fn list_books_api_handler(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Book>>, StatusCode> {
-    let books = sqlx::query_as::<_, Book>("SELECT id, title, author FROM books")
+    let books = sqlx::query_as::<_, Book>("SELECT id, title, author, published_date FROM books")
         .fetch_all(&state.db_pool)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -72,4 +72,24 @@ pub async fn update_book_api_handler(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(updated_book))
+}
+
+// [C] Creación de un comentario para un libro específico
+pub async fn create_comment_api_handler(
+    State(state): State<AppState>,
+    Path(book_id): Path<Uuid>,
+    Json(payload): Json<CreateComment>,
+) -> Result<(StatusCode, Json<Comment>), (StatusCode, String)> {
+    let new_id = Uuid::new_v4();
+    let new_comment = sqlx::query_as::<_, Comment>(
+        "INSERT INTO comments (id, book_id, text) VALUES ($1, $2, $3) RETURNING id, book_id, text, created_at",
+    )
+    .bind(new_id)
+    .bind(book_id)
+    .bind(&payload.text)
+    .fetch_one(&state.db_pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok((StatusCode::CREATED, Json(new_comment)))
 }
