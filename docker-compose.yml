@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  postgres_db:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: library_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_library:/var/lib/postgresql
+
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      # IMPORTANTE: Aquí usamos 'db' (el nombre del servicio) en lugar de 'localhost'
+      - DATABASE_URL=postgres://user:password@postgres_db:5432/library_db
+    depends_on:
+      - postgres_db
+
+volumes:
+  postgres_library:

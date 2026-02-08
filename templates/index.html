@@ -1,0 +1,17 @@
+{% extends "base.html" %} {% block title %}Inicio - Biblioteca{% endblock %} {%
+block content %}
+<div class="p-5 mb-4 bg-white rounded-3 shadow-sm">
+  <h1 class="display-5 fw-bold">¡Bienvenido!</h1>
+  <p class="col-md-8 fs-4">
+    Actualmente tenemos <span class="badge bg-primary">{{ count }}</span> libros
+    registrados.
+  </p>
+  <hr class="my-4" />
+  <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+    <a href="/web/books" class="btn btn-primary btn-lg px-4">Ver Catálogo</a>
+    <a href="/web/books/new" class="btn btn-outline-secondary btn-lg px-4"
+      >Añadir Libro</a
+    >
+  </div>
+</div>
+{% endblock %}
