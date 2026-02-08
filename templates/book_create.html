@@ -7,7 +7,7 @@ block content %}
         <h3 class="card-title mb-0">Nuevo Libro</h3>
       </div>
       <div class="card-body">
-        <form action="/web/books" method="POST">
+        <form action="/web/books" method="POST" enctype="multipart/form-data">
           <div class="mb-3">
             <label for="title" class="form-label">Título</label>
             <input
@@ -39,6 +39,19 @@ block content %}
               name="published_date"
               required
             />
+          </div>
+          <div class="mb-3">
+            <label for="cover" class="form-label">Portada del Libro</label>
+            <input
+              type="file"
+              class="form-control"
+              id="cover"
+              name="cover"
+              accept="image/*"
+            />
+            <div class="form-text">
+              Si no eliges una, se asignará una por defecto.
+            </div>
           </div>
           <div class="d-grid gap-2">
             <button type="submit" class="btn btn-success">Guardar Libro</button>

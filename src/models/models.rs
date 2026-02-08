@@ -8,6 +8,7 @@ pub struct Book {
     pub title: String,
     pub author: String,
     pub published_date: i32,
+    pub image_path: String,
 }
 
 #[derive(serde::Deserialize)]
@@ -15,4 +16,5 @@ pub struct CreateBook {
     pub title: String,
     pub author: String,
     pub published_date: i32,
+    pub image_path: String,
 }

@@ -12,7 +12,7 @@ sqlx = { version = "0.8.6", features = ["runtime-tokio", "postgres", "macros", "
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 tokio = { version = "1.49.0", features = ["full"] }
-tower-http = { version="0.6.8", features = ["fs", "cors"] }
+tower-http = { version = "0.6.8", features = ["fs", "cors"] }
 # Framerwork y ejecución asíncrona: axum y tokio
 # Crates para manejo de fechas: chrono
 # Crates para manejo de plantillas: askama
@@ -20,7 +20,7 @@ tower-http = { version="0.6.8", features = ["fs", "cors"] }
 # Crates para manejo de datos: serde, serde_json
 # Utilidades para servir archivos estáticos y manejo de CORS: tower-http
 askama = { version="0.15.4", features = ["full"] }
-axum = "0.8.8"
+axum = {version = "0.8.8", features = [ "multipart"]}
 chrono = { version = "0.4.43", features = ["serde"] }
 dotenvy = "0.15.7"
 futures-util = "0.3.31"

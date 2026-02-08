@@ -17,8 +17,10 @@ services:
     ports:
       - '3000:3000'
     environment:
-      # IMPORTANTE: Aquí usamos 'db' (el nombre del servicio) en lugar de 'localhost'
+      # IMPORTANTE: Aquí usamos el nombre del servicio en lugar de 'localhost'
       - DATABASE_URL=postgres://user:password@postgres_db:5432/library_db
+    volumes:
+      - ./uploads:/app/uploads # Montamos la carpeta para persistencia de las imágenes
     depends_on:
       - postgres_db
 

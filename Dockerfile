@@ -3,6 +3,7 @@ FROM rust:1.92-slim AS builder
 
 WORKDIR /app
 # Variables para compilar sqlx offline
+ENV SQLX_OFFLINE=true
 
 # Instalamos dependencias del sistema para compilar sqlx y otros
 RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
@@ -37,6 +38,10 @@ COPY .env .env
 # Copiar el script de entrada y darle permisos
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
+
+# Creamos carpeta para uploads
+RUN mkdir -p uploads
+COPY uploads/portada_generica.jpg uploads/portada_generica.jpg
 
 EXPOSE 3000
 

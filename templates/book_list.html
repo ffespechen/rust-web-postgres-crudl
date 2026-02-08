@@ -28,6 +28,7 @@ block content %}
     <table class="table table-hover align-middle mb-0">
       <thead class="table-dark">
         <tr>
+          <th>Imagen</th>
           <th>Título</th>
           <th>Autor</th>
           <th class="text-center">Año</th>
@@ -37,6 +38,14 @@ block content %}
       <tbody>
         {% for book in books %}
         <tr>
+          <td>
+            <img
+              src="../{{ book.image_path }}"
+              alt="Portada de {{ book.title }}"
+              class="img-thumbnail"
+              style="width: 60px; height: auto"
+            />
+          </td>
           <td class="fw-bold">{{ book.title }}</td>
           <td>{{ book.author }}</td>
           <td class="text-center">{{ book.published_date }}</td>
